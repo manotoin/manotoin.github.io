@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>یونو ۴نفره آنلاین</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@latest/dist/peerjs.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lalezar&family=Vazirmatn:wght@400;500;700;900&display=swap');
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    --felt: #0B3B2E; --felt-dark: #082C22; --brass: #D4A24C; --wood: #4A2F1C;
+    --cream: #F5EFE0; --ink: #142019;
+    width: 100%; min-height: 100vh;
+    background: var(--felt-dark);
+    font-family: 'Vazirmatn', sans-serif; color: var(--cream);
+  }
+  #app { min-height: 100vh; position: relative; overflow-x: hidden; }
+  button { font-family: inherit; cursor: pointer; border: none; }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+  /* landing */
+  .uno-landing { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; }
+  .uno-landing__card {
+    width: 100%; max-width: 380px; background: var(--felt);
+    border: 3px solid var(--wood); border-radius: 20px; padding: 28px 22px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.45), inset 0 0 0 2px rgba(212,162,74,0.15);
+    display: flex; flex-direction: column; gap: 14px; text-align: center;
+  }
+  .uno-logo { font-family: 'Lalezar'; font-size: 2.4rem; margin: 0 0 2px; color: var(--brass); }
+  .uno-logo span { color: var(--cream); }
+  .uno-landing__tag { margin: 0 0 6px; font-size: 0.85rem; opacity: 0.8; }
+  .uno-field { display: flex; flex-direction: column; gap: 6px; text-align: right; font-size: 0.8rem; opacity: 0.9; }
+  .uno-field input {
+    background: var(--felt-dark); border: 2px solid rgba(212,162,74,0.35); border-radius: 10px;
+    padding: 10px 12px; color: var(--cream); font-size: 1rem; font-family: inherit;
+  }
+  .uno-field input:focus { border-color: var(--brass); }
+  .uno-tabs { display: flex; background: var(--felt-dark); border-radius: 10px; padding: 4px; gap: 4px; }
+  .uno-tabs button { flex: 1; padding: 8px; border-radius: 8px; background: transparent; color: var(--cream); opacity: 0.6; font-size: 0.85rem; }
+  .uno-tabs button.active { background: var(--brass); color: var(--ink); opacity: 1; font-weight: 700; }
+  .uno-primaryBtn { background: var(--brass); color: var(--ink); font-weight: 900; font-size: 1rem; padding: 13px; border-radius: 12px; margin-top: 6px; }
+  .uno-primaryBtn:active { transform: scale(0.97); }
+  .uno-primaryBtn:disabled { opacity: 0.6; }
+  .uno-secondaryBtn { background: transparent; color: var(--cream); border: 2px solid rgba(245,239,224,0.3) !important; padding: 10px; border-radius: 10px; font-size: 0.85rem; }
+  .uno-secondaryBtn--sm { padding: 8px 14px; font-size: 0.78rem; }
+  .uno-error { background: rgba(214,69,69,0.2); border: 1px solid #D64545; color: #ffd8d8; padding: 8px; border-radius: 8px; font-size: 0.8rem; }
+  .uno-landing__rules { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.72rem; opacity: 0.6; margin-top: 4px; }
+  .uno-codeBox { display: flex; align-items: center; justify-content: center; gap: 10px; background: var(--felt-dark); border: 2px dashed var(--brass); border-radius: 12px; padding: 14px; cursor: pointer; position: relative; }
+  .uno-codeBox span.code { font-family: 'Lalezar'; font-size: 1.6rem; letter-spacing: 0.12em; color: var(--brass); }
+  .uno-copiedTag { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; background: var(--brass); color: var(--ink); padding: 2px 8px; border-radius: 6px; }
+  .uno-lobbyList { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 6px 0; }
+  .uno-lobbySeat { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--felt-dark); border-radius: 12px; padding: 14px 8px; opacity: 0.45; font-size: 0.78rem; }
+  .uno-lobbySeat.filled { opacity: 1; border: 2px solid var(--brass); }
+  .uno-lobbySeat__avatar { font-size: 1.6rem; }
+
+  /* top bar */
+  .uno-topbar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--felt-dark); border-bottom: 2px solid var(--wood); }
+  .uno-pingPill { display: flex; align-items: center; gap: 5px; background: rgba(47,158,91,0.2); color: #7FE0A8; border: 1px solid #2F9E5B; padding: 4px 9px; border-radius: 20px; font-size: 0.72rem; }
+  .uno-pingPill.offline { background: rgba(214,69,69,0.2); color: #ff9d9d; border-color: #D64545; }
+  .uno-codeChip { margin-inline-start: auto; display: flex; align-items: center; gap: 5px; background: var(--felt); border: 1px solid var(--brass); color: var(--brass); font-size: 0.72rem; padding: 4px 9px; border-radius: 20px; cursor: pointer; letter-spacing: 0.06em; }
+  .uno-iconBtn { background: transparent; color: var(--cream); opacity: 0.75; padding: 4px 6px; border-radius: 8px; font-size: 1rem; }
+  .uno-iconBtn:hover { opacity: 1; }
+
+  /* table */
+  .uno-table {
+    position: relative; min-height: 56vh; margin: 14px 10px 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.015) 0 2px, transparent 2px 6px),
+      radial-gradient(ellipse at center, #0F4635 0%, var(--felt) 70%);
+    border: 6px solid var(--wood); border-radius: 24px;
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.5), 0 0 0 2px rgba(212,162,74,0.25);
+    display: flex; align-items: center; justify-content: center; padding: 16px;
+  }
+  .uno-seat { position: absolute; display: flex; align-items: center; gap: 8px; background: rgba(8,44,34,0.85); border: 2px solid rgba(212,162,74,0.3); border-radius: 14px; padding: 6px 10px; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+  .uno-seat--active { border-color: var(--brass); box-shadow: 0 0 16px rgba(212,162,74,0.5); animation: unoPulse 1.6s ease-in-out infinite; }
+  @keyframes unoPulse { 0%,100% { box-shadow: 0 0 10px rgba(212,162,74,0.35); } 50% { box-shadow: 0 0 20px rgba(212,162,74,0.65); } }
+  .uno-seat--top { top: 8px; left: 50%; transform: translateX(-50%); }
+  .uno-seat--bottom { bottom: 8px; left: 50%; transform: translateX(-50%); }
+  .uno-seat--left { left: 8px; top: 50%; transform: translateY(-50%); }
+  .uno-seat--right { right: 8px; top: 50%; transform: translateY(-50%); }
+  .uno-seat__avatar { font-size: 1.4rem; }
+  .uno-seat__info { display: flex; flex-direction: column; font-size: 0.68rem; line-height: 1.3; }
+  .uno-seat__name { font-weight: 700; }
+  .uno-seat__count { opacity: 0.7; }
+  .uno-seat__unoWrap { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .uno-seat__unoTag { background: #D64545; color: #fff; font-family: 'Lalezar'; font-size: 0.75rem; padding: 1px 8px; border-radius: 8px; }
+  .uno-catchBtn { background: var(--brass); color: var(--ink); font-size: 0.62rem; font-weight: 800; padding: 3px 7px; border-radius: 6px; white-space: nowrap; }
+
+  .uno-center { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .uno-dial__ring { width: 64px; height: 64px; border-radius: 50%; background: var(--felt-dark); border: 3px solid var(--brass); position: relative; display: flex; align-items: center; justify-content: center; }
+  .uno-dial__needle { position: absolute; width: 3px; height: 26px; background: var(--brass); top: 6px; left: 50%; margin-left: -1.5px; transform-origin: 50% 26px; border-radius: 2px; transition: transform 0.5s cubic-bezier(.4,1.4,.6,1); }
+  .uno-dial__hub { font-size: 0.95rem; color: var(--brass); background: var(--felt-dark); z-index: 1; }
+  .uno-piles { display: flex; gap: 18px; align-items: center; }
+  .uno-pile { position: relative; display: flex; flex-direction: column; align-items: center; }
+  .uno-pile--deck { cursor: pointer; }
+  .uno-pile__count { font-size: 0.68rem; margin-top: 4px; opacity: 0.75; }
+  .uno-currentColorDot { position: absolute; bottom: -8px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--cream); }
+  .uno-eventRibbon { font-size: 0.7rem; opacity: 0.75; background: rgba(0,0,0,0.25); padding: 4px 12px; border-radius: 10px; max-width: 260px; text-align: center; }
+
+  /* cards */
+  .uno-card { position: relative; border-radius: 10px; border: 2px solid rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 8px rgba(0,0,0,0.35); flex-shrink: 0; }
+  .uno-card--md { width: clamp(44px, 12vw, 58px); height: clamp(64px, 17vw, 84px); }
+  .uno-card--lg { width: clamp(54px, 15vw, 68px); height: clamp(78px, 20vw, 98px); }
+  .uno-card--back { background: var(--felt); border-color: var(--brass); }
+  .uno-card__backmark { font-family: 'Lalezar'; color: var(--brass); font-size: 0.85rem; letter-spacing: 0.05em; }
+  .uno-card__ellipse { position: absolute; width: 78%; height: 55%; background: rgba(255,255,255,0.9); border-radius: 50%; transform: rotate(-25deg); }
+  .uno-card__center { position: relative; font-family: 'Lalezar'; font-size: clamp(1.1rem, 4.5vw, 1.5rem); color: #222; z-index: 1; }
+  .uno-card__corner { position: absolute; font-family: 'Lalezar'; font-size: 0.6rem; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+  .uno-card__corner--tl { top: 3px; right: 5px; }
+  .uno-card__corner--br { bottom: 3px; left: 5px; }
+  .uno-card--disabled { opacity: 0.4; filter: grayscale(0.3); }
+  .uno-card--highlight { transform: translateY(-6px); box-shadow: 0 8px 16px rgba(212,162,74,0.5); }
+  .uno-card:disabled { cursor: default; }
+
+  /* hand area */
+  .uno-handArea { margin-top: 10px; padding: 10px 12px 20px; }
+  .uno-handBar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+  .uno-turnLabel { font-weight: 700; font-size: 0.9rem; color: var(--brass); }
+  .uno-handActions { display: flex; gap: 8px; align-items: center; }
+  .uno-unoBtn { background: #D64545; color: #fff; font-family: 'Lalezar'; font-size: 0.95rem; padding: 6px 16px; border-radius: 10px; box-shadow: 0 3px 8px rgba(214,69,69,0.5); }
+  .uno-hand { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+
+  /* modals */
+  .uno-modal__backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+  .uno-modal { background: var(--felt); border: 3px solid var(--wood); border-radius: 18px; padding: 22px; max-width: 340px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  .uno-modal h3 { font-family: 'Lalezar'; color: var(--brass); margin: 0 0 14px; font-size: 1.2rem; }
+  .uno-modal--wide { max-width: 380px; text-align: right; }
+  .uno-modal__head { display: flex; justify-content: space-between; align-items: center; }
+  .uno-colorGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .uno-colorBtn { padding: 18px; border-radius: 12px; color: #fff; font-weight: 800; font-size: 0.9rem; box-shadow: inset 0 0 0 2px rgba(255,255,255,0.4); }
+  .uno-rules { text-align: right; font-size: 0.8rem; line-height: 1.9; padding-inline-start: 18px; opacity: 0.9; }
+  .uno-winModal { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .uno-winModal h2 { font-family: 'Lalezar'; color: var(--cream); font-size: 1.3rem; margin: 4px 0 8px; }
+  .uno-winModal button { width: 100%; }
+  .uno-loading { min-height: 100vh; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; opacity: 0.8; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================== ثابت‌ها ============================== */
+const COLORS = ['red', 'yellow', 'green', 'blue'];
+const COLOR_HEX = { red: '#D64545', yellow: '#E6B400', green: '#2F9E5B', blue: '#3568D4' };
+const COLOR_LABEL_FA = { red: 'قرمز', yellow: 'زرد', green: 'سبز', blue: 'آبی' };
+const AVATARS = ['🦁', '🐼', '🦊', '🐨'];
+const SEAT_ORDER = ['bottom', 'right', 'top', 'left'];
+const ANGLE_FOR_REL = { 0: 180, 1: 90, 2: 0, 3: 270 };
+const CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const WILD_GRADIENT = 'conic-gradient(from 90deg, #D64545 0deg 90deg, #E6B400 90deg 180deg, #3568D4 180deg 270deg, #2F9E5B 270deg 360deg)';
+
+function uid(prefix) { return (prefix||'') + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4); }
+function randomToken(len) { let s=''; for (let i=0;i<len;i++) s += CODE_CHARS[Math.floor(Math.random()*CODE_CHARS.length)]; return s; }
+function esc(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================== منطق بازی (خالص) ============================== */
+function buildDeck() {
+  const deck = [];
+  COLORS.forEach((color) => {
+    deck.push({ id: uid('c_'), color, type: 'number', value: 0 });
+    for (let n = 1; n <= 9; n++) {
+      deck.push({ id: uid('c_'), color, type: 'number', value: n });
+      deck.push({ id: uid('c_'), color, type: 'number', value: n });
+    }
+    ['skip', 'reverse', 'draw2'].forEach((t) => {
+      deck.push({ id: uid('c_'), color, type: t });
+      deck.push({ id: uid('c_'), color, type: t });
+    });
+  });
+  for (let i = 0; i < 4; i++) {
+    deck.push({ id: uid('c_'), color: 'wild', type: 'wild' });
+    deck.push({ id: uid('c_'), color: 'wild', type: 'wild4' });
+  }
+  return deck;
+}
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function cardLabel(card) {
+  switch (card.type) {
+    case 'number': return String(card.value);
+    case 'skip': return '⦸';
+    case 'reverse': return '⇄';
+    case 'draw2': return '+2';
+    case 'wild': return '★';
+    case 'wild4': return '+4';
+    default: return '?';
+  }
+}
+function canPlay(card, topCard, currentColor) {
+  if (!topCard) return true;
+  if (card.type === 'wild' || card.type === 'wild4') return true;
+  if (card.color === currentColor) return true;
+  if (topCard.type === 'number' && card.type === 'number' && card.value === topCard.value) return true;
+  if (topCard.type !== 'number' && card.type === topCard.type) return true;
+  return false;
+}
+function nextIndex(current, direction, n, steps) { steps = steps||1; return ((current + direction*steps) % n + n) % n; }
+function drawFromDeck(deck, discard, count) {
+  let d = [...deck], disc = [...discard]; const drawn = [];
+  for (let i = 0; i < count; i++) {
+    if (d.length === 0) {
+      if (disc.length <= 1) break;
+      const top = disc[disc.length-1]; const rest = disc.slice(0,-1);
+      d = shuffle(rest); disc = [top];
+    }
+    drawn.push(d.pop());
+  }
+  return { drawn, deck: d, discard: disc };
+}
+function resolvePlay(state, card, chosenColor) {
+  const players = state.players, n = players.length;
+  let newDirection = state.direction, drawTarget = null, drawAmount = 0, steps = 1;
+  switch (card.type) {
+    case 'reverse': newDirection = -state.direction; steps = 1; break;
+    case 'skip': steps = 2; break;
+    case 'draw2': drawTarget = players[nextIndex(state.currentIndex, state.direction, n, 1)].id; drawAmount = 2; steps = 2; break;
+    case 'wild4': drawTarget = players[nextIndex(state.currentIndex, state.direction, n, 1)].id; drawAmount = 4; steps = 2; break;
+    default: steps = 1;
+  }
+  const newIndex = nextIndex(state.currentIndex, newDirection, n, steps);
+  const newColor = (card.type==='wild'||card.type==='wild4') ? chosenColor : card.color;
+  return { newDirection, newIndex, newColor, drawTarget, drawAmount };
+}
+function startGame(players) {
+  let deck = shuffle(buildDeck());
+  const hands = {};
+  players.forEach((p) => { hands[p.id] = deck.splice(0, 7); });
+  let first = deck.pop(); let guard = 0;
+  while (first.type === 'wild4' && guard < 20) { deck.unshift(first); deck = shuffle(deck); first = deck.pop(); guard++; }
+  const discard = [first];
+  const currentColor = first.color === 'wild' ? COLORS[Math.floor(Math.random()*4)] : first.color;
+  return { deck, hands, discard, currentColor, currentIndex: 0, direction: 1, status: 'playing',
+    pendingUnoCheck: null, unoDeclared: {}, winnerId: null, drawnPendingId: null };
+}
+function describeEvent(name, card) {
+  const map = {
+    number: `${name} یک ${card.color==='wild'?'':COLOR_LABEL_FA[card.color]} ${card.value} انداخت`,
+    skip: `${name} نفر بعدی رو رد کرد`,
+    reverse: `${name} جهت بازی رو عوض کرد`,
+    draw2: `${name} +۲ زد`,
+    wild: `${name} رنگ رو عوض کرد`,
+    wild4: `${name} +۴ زد و رنگ رو عوض کرد`,
+  };
+  return map[card.type] || `${name} یک کارت بازی کرد`;
+}
+
+/* ---- ردیوسرهای خالص (فقط میزبان این‌ها رو اجرا می‌کنه) ---- */
+function applyJoin(state, playerId, name) {
+  if (state.players.find(p=>p.id===playerId)) return state;
+  if (state.players.length>=4 || state.status!=='waiting') return state;
+  const cleanName = String(name||'بازیکن').trim().slice(0,20) || 'بازیکن';
+  const players = [...state.players, {id:playerId, name:cleanName, avatar:AVATARS[state.players.length]}];
+  let next = {...state, players, lastEvent:{text:`${cleanName} به اتاق پیوست`, ts:Date.now()}};
+  if (players.length===4) next = {...next, ...startGame(players)};
+  return next;
+}
+function applyLeaveLobby(state, playerId) {
+  if (state.status!=='waiting') return state;
+  return {...state, players: state.players.filter(p=>p.id!==playerId)};
+}
+function applyPlay(state, playerId, cardId, chosenColor) {
+  if (state.status!=='playing') return state;
+  if (!state.players[state.currentIndex] || state.players[state.currentIndex].id !== playerId) return state;
+  const hand = state.hands[playerId]||[];
+  const card = hand.find(c=>c.id===cardId);
+  if (!card) return state;
+  const top = state.discard[state.discard.length-1];
+  if (!canPlay(card, top, state.currentColor)) return state;
+  if ((card.type==='wild'||card.type==='wild4') && !chosenColor) return state;
+  const newHand = hand.filter(c=>c.id!==cardId);
+  const eff = resolvePlay(state, card, chosenColor);
+  let hands = {...state.hands, [playerId]: newHand};
+  let deck = state.deck, discard=[...state.discard, card];
+  let unoDeclared = {...state.unoDeclared};
+  if (eff.drawTarget) {
+    const res = drawFromDeck(deck, discard, eff.drawAmount);
+    deck = res.deck; discard = res.discard;
+    hands = {...hands, [eff.drawTarget]: [...(hands[eff.drawTarget]||[]), ...res.drawn]};
+    unoDeclared[eff.drawTarget]=false;
+  }
+  const iCalledUno = !!unoDeclared[playerId];
+  unoDeclared[playerId]=false;
+  let pendingUnoCheck = (state.pendingUnoCheck && state.pendingUnoCheck.playerId===playerId) ? null : state.pendingUnoCheck;
+  let winnerId=null, status=state.status;
+  if (newHand.length===0) { winnerId=playerId; status='finished'; }
+  else if (newHand.length===1 && !iCalledUno) { pendingUnoCheck = {playerId}; }
+  const name = (state.players.find(p=>p.id===playerId)||{}).name || '';
+  return {...state, hands, deck, discard, unoDeclared,
+    direction: eff.newDirection, currentIndex: eff.newIndex, currentColor: eff.newColor,
+    pendingUnoCheck, winnerId, status, drawnPendingId: null,
+    lastEvent: {text: describeEvent(name, card), ts: Date.now()}};
+}
+function applyDraw(state, playerId) {
+  if (state.status!=='playing') return state;
+  if (!state.players[state.currentIndex] || state.players[state.currentIndex].id !== playerId) return state;
+  if (state.drawnPendingId) return state;
+  const res = drawFromDeck(state.deck, state.discard, 1);
+  const drawnCard = res.drawn[0];
+  if (!drawnCard) return state;
+  const hands = {...state.hands, [playerId]: [...(state.hands[playerId]||[]), drawnCard]};
+  const unoDeclared = {...state.unoDeclared, [playerId]: false};
+  const playable = canPlay(drawnCard, res.discard[res.discard.length-1], state.currentColor);
+  const name = (state.players.find(p=>p.id===playerId)||{}).name || '';
+  let next = {...state, deck: res.deck, discard: res.discard, hands, unoDeclared,
+    drawnPendingId: playable ? drawnCard.id : null,
+    lastEvent: {text:`${name} یک کارت کشید`, ts:Date.now()}};
+  if (!playable) next.currentIndex = nextIndex(state.currentIndex, state.direction, state.players.length, 1);
+  return next;
+}
+function applyPass(state, playerId) {
+  if (state.status!=='playing') return state;
+  if (!state.players[state.currentIndex] || state.players[state.currentIndex].id !== playerId) return state;
+  if (!state.drawnPendingId) return state;
+  const name = (state.players.find(p=>p.id===playerId)||{}).name || '';
+  return {...state, drawnPendingId: null,
+    currentIndex: nextIndex(state.currentIndex, state.direction, state.players.length, 1),
+    lastEvent: {text:`${name} نوبتش رو رد کرد`, ts:Date.now()}};
+}
+function applyDeclareUno(state, playerId) {
+  const unoDeclared = {...state.unoDeclared, [playerId]: true};
+  let pendingUnoCheck = (state.pendingUnoCheck && state.pendingUnoCheck.playerId===playerId) ? null : state.pendingUnoCheck;
+  return {...state, unoDeclared, pendingUnoCheck};
+}
+function applyCatchUno(state, playerId, targetId) {
+  if (!state.pendingUnoCheck || state.pendingUnoCheck.playerId!==targetId) return state;
+  const res = drawFromDeck(state.deck, state.discard, 2);
+  const hands = {...state.hands, [targetId]: [...(state.hands[targetId]||[]), ...res.drawn]};
+  const targetName = (state.players.find(p=>p.id===targetId)||{}).name || '';
+  return {...state, deck: res.deck, discard: res.discard, hands,
+    pendingUnoCheck: null, unoDeclared: {...state.unoDeclared, [targetId]: false},
+    lastEvent: {text:`${targetName} یونو نگفت و ۲ کارت جریمه کشید!`, ts:Date.now()}};
+}
+function applyRematch(state) {
+  const started = startGame(state.players);
+  return {...state, ...started, lastEvent:{text:'یک دور جدید شروع شد', ts:Date.now()}};
+}
+function personalize(state, forId) {
+  if (state.status === 'waiting') {
+    return { status:'waiting', code: state.code, players: state.players.map(p=>({id:p.id,name:p.name,avatar:p.avatar})), myId: forId };
+  }
+  return {
+    status: state.status, code: state.code,
+    players: state.players.map(p=>({id:p.id,name:p.name,avatar:p.avatar})),
+    myId: forId,
+    myHand: state.hands[forId] || [],
+    handCounts: Object.fromEntries(state.players.map(p=>[p.id,(state.hands[p.id]||[]).length])),
+    currentIndex: state.currentIndex, direction: state.direction, currentColor: state.currentColor,
+    discardTop: state.discard[state.discard.length-1] || null, deckCount: state.deck.length,
+    pendingUnoCheck: state.pendingUnoCheck, unoDeclared: state.unoDeclared, winnerId: state.winnerId,
+    lastEvent: state.lastEvent, drawnPendingId: state.drawnPendingId,
+  };
+}
+
+/* ============================== وضعیت محلی ============================== */
+let myPlayerId = uid('p_');
+let myName = '';
+let isHost = false;
+let peer = null;
+let hostConn = null;
+let guestConns = {};
+let gameState = null;      // فقط میزبان کامل نگه می‌داره
+let currentView = null;    // چیزی که رندر می‌شه (برای هر دو نقش)
+let uiScreen = 'landing';  // landing | room
+let wakeLock = null;
+let roomCode = '';
+let nameInputValue = '';
+let joinCodeValue = '';
+let mode = 'create';
+let busy = false;
+let errorMsg = '';
+let pendingWildCardId = null;
+let showRules = false;
+let copiedTag = false;
+let pingTimer = null;
+let latencyMs = null;
+let connected = true;
+
+/* ============================== شبکه: میزبان ============================== */
+function hostApply(action, fromPlayerId) {
+  switch (action.type) {
+    case 'play': gameState = applyPlay(gameState, fromPlayerId, action.cardId, action.chosenColor); break;
+    case 'draw': gameState = applyDraw(gameState, fromPlayerId); break;
+    case 'pass': gameState = applyPass(gameState, fromPlayerId); break;
+    case 'declareUno': gameState = applyDeclareUno(gameState, fromPlayerId); break;
+    case 'catchUno': gameState = applyCatchUno(gameState, fromPlayerId, action.targetId); break;
+    case 'rematch': gameState = applyRematch(gameState); break;
+    case 'leaveLobby': gameState = applyLeaveLobby(gameState, fromPlayerId); break;
+  }
+  broadcastState();
+}
+function broadcastState() {
+  Object.keys(guestConns).forEach((pid) => {
+    const conn = guestConns[pid];
+    if (conn && conn.open) { try { conn.send({type:'state', state: personalize(gameState, pid)}); } catch(e){} }
+  });
+  currentView = personalize(gameState, myPlayerId);
+  render();
+}
+function setupGuestConnHandlers(conn) {
+  conn.on('data', (data) => {
+    if (!data || !data.type) return;
+    if (data.type === 'join') {
+      conn.__playerId = data.playerId;
+      guestConns[data.playerId] = conn;
+      const before = gameState.players.length;
+      const wasWaiting = gameState.status === 'waiting';
+      gameState = applyJoin(gameState, data.playerId, data.name);
+      const added = gameState.players.some(p=>p.id===data.playerId);
+      if (!added) {
+        try { conn.send({type:'error', message: !wasWaiting ? 'بازی از قبل شروع شده' : 'اتاق پره (۴ نفر)'}); } catch(e){}
+      }
+      broadcastState();
+    } else if (data.type === 'action' && conn.__playerId) {
+      hostApply(data.action, conn.__playerId);
+    } else if (data.type === 'ping' && conn.__playerId) {
+      try { conn.send({type:'pong', ts: data.ts}); } catch(e){}
+    }
+  });
+  conn.on('close', () => {
+    if (conn.__playerId) {
+      if (gameState && gameState.status === 'waiting') {
+        gameState = applyLeaveLobby(gameState, conn.__playerId);
+        broadcastState();
+      }
+      delete guestConns[conn.__playerId];
+    }
+  });
+}
+function createRoom() {
+  const name = nameInputValue.trim();
+  if (!name) { errorMsg = 'اول اسمت رو بنویس'; render(); return; }
+  if (typeof Peer === 'undefined') { errorMsg = 'کتابخانه‌ی شبکه لود نشد؛ اتصال اینترنتت رو چک کن'; render(); return; }
+  busy = true; errorMsg = ''; render();
+  isHost = true; myName = name;
+  const code = 'UNO4-' + randomToken(5);
+  try { if (peer) peer.destroy(); } catch(e) {}
+  peer = new Peer(code);
+  peer.on('open', () => {
+    gameState = {
+      code, players:[{id:myPlayerId,name,avatar:AVATARS[0]}], status:'waiting',
+      deck:[], discard:[], hands:{}, currentIndex:0, direction:1, currentColor:null,
+      pendingUnoCheck:null, unoDeclared:{}, winnerId:null, drawnPendingId:null,
+      lastEvent:{text:`${name} اتاق رو ساخت`, ts:Date.now()},
+    };
+    roomCode = code; uiScreen = 'room'; busy = false;
+    currentView = personalize(gameState, myPlayerId);
+    requestWakeLock();
+    render();
+  });
+  peer.on('connection', setupGuestConnHandlers);
+  peer.on('disconnected', () => {
+    connected = false;
+    setTimeout(() => { try { if (peer && !peer.destroyed) peer.reconnect(); } catch(e){} }, 800);
+  });
+  peer.on('close', () => { connected = false; });
+  peer.on('error', (err) => {
+    busy = false;
+    console.warn('PeerJS error (host):', err);
+    if (err && err.type === 'unavailable-id') { createRoom(); return; }
+    errorMsg = 'مشکلی در ساخت اتاق پیش اومد، دوباره امتحان کن';
+    render();
+  });
+}
+
+/* ============================== شبکه: مهمان ============================== */
+function sendAction(action) { if (hostConn && hostConn.open) { try { hostConn.send({type:'action', action}); } catch(e){} } }
+function joinRoomFlow() {
+  const name = nameInputValue.trim();
+  const code = joinCodeValue.trim().toUpperCase();
+  if (!name) { errorMsg = 'اول اسمت رو بنویس'; render(); return; }
+  if (!code) { errorMsg = 'کد اتاق رو بنویس'; render(); return; }
+  if (typeof Peer === 'undefined') { errorMsg = 'کتابخانه‌ی شبکه لود نشد؛ اتصال اینترنتت رو چک کن'; render(); return; }
+  busy = true; errorMsg = ''; render();
+  isHost = false; myName = name;
+  try { if (peer) peer.destroy(); } catch(e) {}
+  peer = new Peer();
+  peer.on('open', () => {
+    hostConn = peer.connect(code, {reliable:true});
+    hostConn.on('open', () => {
+      busy = false; roomCode = code; uiScreen = 'room'; connected = true;
+      hostConn.send({type:'join', playerId: myPlayerId, name});
+      startPinging();
+      requestWakeLock();
+      render();
+    });
+    hostConn.on('data', handleGuestData);
+    hostConn.on('close', () => { connected = false; errorMsg = 'اتصال به میزبان قطع شد'; render(); });
+    hostConn.on('error', () => { busy = false; errorMsg = 'خطا در اتصال به اتاق'; render(); });
+  });
+  peer.on('disconnected', () => {
+    connected = false;
+    setTimeout(() => { try { if (peer && !peer.destroyed) peer.reconnect(); } catch(e){} }, 800);
+  });
+  peer.on('error', (err) => {
+    busy = false;
+    console.warn('PeerJS error (guest):', err);
+    errorMsg = 'اتاقی با این کد پیدا نشد یا در دسترس نیست (مطمئن شو میزبان هنوز صفحه‌ی بازی رو بازه)';
+    render();
+  });
+}
+function handleGuestData(data) {
+  if (!data || !data.type) return;
+  if (data.type === 'state') { currentView = data.state; render(); }
+  else if (data.type === 'pong') { latencyMs = Date.now() - data.ts; connected = true; updatePingBadge(); }
+  else if (data.type === 'error') { errorMsg = data.message; render(); }
+}
+function startPinging() {
+  if (pingTimer) clearInterval(pingTimer);
+  const ping = () => { if (hostConn && hostConn.open) { try { hostConn.send({type:'ping', ts: Date.now()}); } catch(e){} } };
+  ping();
+  pingTimer = setInterval(ping, 2500);
+}
+function updatePingBadge() {
+  const el = document.getElementById('pingBadge');
+  if (el) el.textContent = connected ? `${latencyMs ?? '--'} ms` : 'قطع شد';
+}
+async function requestWakeLock() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (e) { /* not critical */ }
+}
+function releaseWakeLock() { try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch(e){} }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    if (uiScreen === 'room') requestWakeLock();
+    if (peer && !peer.destroyed && peer.disconnected) { try { peer.reconnect(); } catch(e){} }
+  }
+});
+
+/* ============================== کنش‌های کاربر ============================== */
+function isMyTurnNow() { return currentView && currentView.status==='playing' && currentView.players[currentView.currentIndex] && currentView.players[currentView.currentIndex].id===myPlayerId; }
+function doAction(action) { if (isHost) hostApply(action, myPlayerId); else sendAction(action); }
+function onCardClick(cardId) {
+  if (!isMyTurnNow() || pendingWildCardId) return;
+  const card = (currentView.myHand||[]).find(c=>c.id===cardId);
+  if (!card) return;
+  if (!canPlay(card, currentView.discardTop, currentView.currentColor)) return;
+  if (card.type==='wild'||card.type==='wild4') { pendingWildCardId = cardId; render(); return; }
+  doAction({type:'play', cardId, chosenColor:null});
+}
+function onPickColor(color) {
+  const cardId = pendingWildCardId; pendingWildCardId = null;
+  doAction({type:'play', cardId, chosenColor: color});
+}
+function onDrawClick() { if (isMyTurnNow() && !currentView.drawnPendingId) doAction({type:'draw'}); }
+function onPassClick() { if (isMyTurnNow() && currentView.drawnPendingId) doAction({type:'pass'}); }
+function onDeclareUno() { doAction({type:'declareUno'}); }
+function onCatchUno(targetId) { doAction({type:'catchUno', targetId}); }
+function onRematch() { doAction({type:'rematch'}); }
+function toggleRules(v) { showRules = v; render(); }
+function copyCode() {
+  try { navigator.clipboard.writeText(roomCode); copiedTag = true; render(); setTimeout(()=>{ copiedTag=false; render(); }, 1400); } catch(e) {}
+}
+function leaveLobby() {
+  if (isHost) { try { peer && peer.destroy(); } catch(e){} }
+  else { doAction({type:'leaveLobby'}); try { peer && peer.destroy(); } catch(e){} }
+  resetToLanding();
+}
+function leaveRoom() {
+  try { if (pingTimer) clearInterval(pingTimer); } catch(e){}
+  try { if (peer) peer.destroy(); } catch(e){}
+  resetToLanding();
+}
+function resetToLanding() {
+  releaseWakeLock();
+  if (pingTimer) { try { clearInterval(pingTimer); } catch(e){} pingTimer = null; }
+  uiScreen='landing'; roomCode=''; gameState=null; currentView=null; guestConns={}; hostConn=null; peer=null;
+  errorMsg=''; pendingWildCardId=null; showRules=false; latencyMs=null; connected=true;
+  render();
+}
+function setMode(m) { mode = m; errorMsg=''; render(); }
+function onNameInput(el) { nameInputValue = el.value; }
+function onCodeInput(el) { joinCodeValue = el.value.toUpperCase(); el.value = joinCodeValue; }
+function onEnterSubmit(e) { if (e.key === 'Enter') { if (mode==='create') createRoom(); else joinRoomFlow(); } }
+
+/* ============================== رندر ============================== */
+function cardHtml(card, opts) {
+  opts = opts || {};
+  if (opts.faceDown) return `<div class="uno-card uno-card--${opts.size||'md'} uno-card--back"><span class="uno-card__backmark">UNO</span></div>`;
+  const label = cardLabel(card);
+  const bg = card.color === 'wild' ? WILD_GRADIENT : COLOR_HEX[card.color];
+  let cls = `uno-card uno-card--${opts.size||'md'}`;
+  if (opts.disabled) cls += ' uno-card--disabled';
+  if (opts.highlight) cls += ' uno-card--highlight';
+  const click = opts.clickable && !opts.disabled ? ` onclick="onCardClick('${card.id}')"` : '';
+  const dis = opts.disabled ? ' disabled' : '';
+  return `<button type="button" class="${cls}" style="background:${bg}"${click}${dis}>
+    <span class="uno-card__corner uno-card__corner--tl">${label}</span>
+    <span class="uno-card__ellipse"></span>
+    <span class="uno-card__center">${label}</span>
+    <span class="uno-card__corner uno-card__corner--br">${label}</span>
+  </button>`;
+}
+
+function renderLanding() {
+  return `<div class="uno-landing"><div class="uno-landing__card">
+    <h1 class="uno-logo">یونو <span>۴نفره</span></h1>
+    <p class="uno-landing__tag">با کد اتاق، سه نفر دیگه رو دعوت کن و آنلاین بازی کن.</p>
+    <label class="uno-field"><span>اسمت</span>
+      <input id="nameInput" value="${esc(nameInputValue)}" oninput="onNameInput(this)" onkeydown="onEnterSubmit(event)" placeholder="مثلاً سارا" maxlength="16">
+    </label>
+    <div class="uno-tabs">
+      <button class="${mode==='create'?'active':''}" onclick="setMode('create')">ساخت اتاق</button>
+      <button class="${mode==='join'?'active':''}" onclick="setMode('join')">پیوستن با کد</button>
+    </div>
+    ${mode==='join' ? `<label class="uno-field"><span>کد اتاق</span>
+      <input id="codeInput" value="${esc(joinCodeValue)}" oninput="onCodeInput(this)" onkeydown="onEnterSubmit(event)" placeholder="مثلاً UNO4-K7QX9" style="letter-spacing:0.08em;text-align:center;font-family:Lalezar">
+    </label>` : ''}
+    ${errorMsg ? `<div class="uno-error">${esc(errorMsg)}</div>` : ''}
+    <button class="uno-primaryBtn" ${busy?'disabled':''} onclick="${mode==='create'?'createRoom()':'joinRoomFlow()'}">
+      ${busy ? 'یک لحظه...' : (mode==='create' ? 'ساخت اتاق جدید' : 'ورود به اتاق')}
+    </button>
+    <div class="uno-landing__rules">👥 دقیقاً ۴ بازیکن لازمه تا بازی شروع بشه</div>
+  </div></div>`;
+}
+
+function renderLoading() { return `<div class="uno-loading">در حال اتصال...</div>`; }
+
+function renderLobby() {
+  const seats = [0,1,2,3].map(i => {
+    const p = currentView.players[i];
+    return `<div class="uno-lobbySeat${p?' filled':''}"><span class="uno-lobbySeat__avatar">${p?p.avatar:'＋'}</span><span>${p?esc(p.name):'خالی'}</span></div>`;
+  }).join('');
+  return `<div class="uno-landing"><div class="uno-landing__card">
+    <h2 class="uno-logo" style="font-size:1.6rem">در انتظار بازیکن‌ها</h2>
+    <div class="uno-codeBox" onclick="copyCode()"><span class="code">${esc(roomCode)}</span>📋${copiedTag?'<span class="uno-copiedTag">کپی شد</span>':''}</div>
+    <p class="uno-landing__tag">این کد رو با ۳ نفر دیگه به اشتراک بذار (باید همین فایل رو باز کرده باشن)</p>
+    <div class="uno-lobbyList">${seats}</div>
+    ${errorMsg ? `<div class="uno-error">${esc(errorMsg)}</div>` : ''}
+    <button class="uno-secondaryBtn" onclick="leaveLobby()">ترک اتاق</button>
+  </div></div>`;
+}
+
+function renderGame() {
+  const v = currentView;
+  const myIndex = v.players.findIndex(p=>p.id===myPlayerId);
+  const others = v.players.filter(p=>p.id!==myPlayerId);
+  const myHand = v.myHand || [];
+  const n = v.players.length;
+  const currentRel = ((v.currentIndex - myIndex) % n + n) % n;
+  const dialAngle = ANGLE_FOR_REL[currentRel] ?? 0;
+  const winner = v.players.find(p=>p.id===v.winnerId);
+  const isMyTurn = isMyTurnNow();
+
+  const seatsHtml = others.map(p => {
+    const idx = v.players.findIndex(x=>x.id===p.id);
+    const rel = ((idx - myIndex) % n + n) % n;
+    const position = SEAT_ORDER[rel] || 'top';
+    const count = v.handCounts ? v.handCounts[p.id] : 0;
+    const unoActive = v.pendingUnoCheck && v.pendingUnoCheck.playerId === p.id;
+    const isTurn = v.players[v.currentIndex] && v.players[v.currentIndex].id === p.id;
+    return `<div class="uno-seat uno-seat--${position}${isTurn?' uno-seat--active':''}">
+      <div class="uno-seat__avatar">${p.avatar}</div>
+      <div class="uno-seat__info"><span class="uno-seat__name">${esc(p.name)}</span><span class="uno-seat__count">${count} کارت</span></div>
+      ${unoActive ? `<div class="uno-seat__unoWrap"><span class="uno-seat__unoTag">UNO!</span><button class="uno-catchBtn" onclick="onCatchUno('${p.id}')">گرفتمت!</button></div>` : ''}
+    </div>`;
+  }).join('');
+
+  const deckClick = (isMyTurn && !v.drawnPendingId) ? ' onclick="onDrawClick()"' : '';
+  const canDeclareUno = isMyTurn && v.status==='playing' && ((myHand.length===2 && !(v.unoDeclared&&v.unoDeclared[myPlayerId])) || (v.pendingUnoCheck && v.pendingUnoCheck.playerId===myPlayerId));
+
+  const handHtml = myHand.map(card => {
+    const playable = isMyTurn && !pendingWildCardId && canPlay(card, v.discardTop, v.currentColor);
+    return cardHtml(card, {size:'md', clickable:true, disabled: !playable, highlight: playable});
+  }).join('');
+
+  const winModal = v.status === 'finished' ? `
+    <div class="uno-modal__backdrop"><div class="uno-modal uno-winModal">
+      <div style="font-size:2.2rem">👑</div>
+      <h2>${winner ? esc(winner.name) + ' برنده شد!' : 'بازی تمام شد'}</h2>
+      <button class="uno-primaryBtn" onclick="onRematch()">یک دور دیگه</button>
+      <button class="uno-secondaryBtn" onclick="leaveRoom()">خروج</button>
+    </div></div>` : '';
+
+  const wildModal = pendingWildCardId ? `
+    <div class="uno-modal__backdrop"><div class="uno-modal">
+      <h3>یک رنگ انتخاب کن</h3>
+      <div class="uno-colorGrid">${COLORS.map(c=>`<button class="uno-colorBtn" style="background:${COLOR_HEX[c]}" onclick="onPickColor('${c}')">${COLOR_LABEL_FA[c]}</button>`).join('')}</div>
+    </div></div>` : '';
+
+  const rulesModal = showRules ? `
+    <div class="uno-modal__backdrop" onclick="toggleRules(false)"><div class="uno-modal uno-modal--wide" onclick="event.stopPropagation()">
+      <div class="uno-modal__head"><h3>قوانین سریع</h3><button class="uno-iconBtn" onclick="toggleRules(false)">✕</button></div>
+      <ul class="uno-rules">
+        <li>هر نوبت باید کارتی هم‌رنگ یا هم‌عدد با کارت روی میز بازی کنی، یا یک کارت رنگین‌کمانی (wild) بزنی.</li>
+        <li>اگر کارتی برای بازی نداری، یک کارت می‌کشی؛ اگر قابل‌بازی بود می‌تونی همون موقع بزنی، وگرنه نوبتت تموم می‌شه.</li>
+        <li>⦸ رد می‌کنه، ⇄ جهت بازی رو برمی‌گردونه، +۲ و +۴ نفر بعدی رو وادار به کشیدن کارت می‌کنن.</li>
+        <li>وقتی یک کارت برات می‌مونه باید دکمه‌ی «!UNO» رو بزنی، وگرنه بقیه می‌تونن بگیرنت و ۲ کارت جریمه بکشی.</li>
+        <li>هرکی اول کارت‌هاش تموم بشه، برنده‌ست!</li>
+      </ul>
+    </div></div>` : '';
+
+  return `
+    <div class="uno-topbar">
+      <div class="uno-pingPill${connected?'':' offline'}">📶 <span id="pingBadge">${isHost ? 'میزبان' : (connected ? `${latencyMs ?? '--'} ms` : 'قطع شد')}</span></div>
+      <div class="uno-codeChip" onclick="copyCode()">${esc(roomCode)} 📋</div>
+      <button class="uno-iconBtn" onclick="toggleRules(true)">ℹ️</button>
+      <button class="uno-iconBtn" onclick="leaveRoom()">✕</button>
+    </div>
+    <div class="uno-table">
+      ${seatsHtml}
+      <div class="uno-center">
+        <div class="uno-dial"><div class="uno-dial__ring">
+          <div class="uno-dial__needle" style="transform:rotate(${dialAngle}deg)"></div>
+          <div class="uno-dial__hub">${v.direction===1?'↻':'↺'}</div>
+        </div></div>
+        <div class="uno-piles">
+          <div class="uno-pile uno-pile--deck"${deckClick}>${cardHtml(null, {faceDown:true, size:'lg'})}<span class="uno-pile__count">${v.deckCount}</span></div>
+          <div class="uno-pile">${v.discardTop ? cardHtml(v.discardTop, {size:'lg'}) : ''}<span class="uno-currentColorDot" style="background:${COLOR_HEX[v.currentColor]||'#888'}"></span></div>
+        </div>
+        ${v.lastEvent ? `<div class="uno-eventRibbon">${esc(v.lastEvent.text)}</div>` : ''}
+      </div>
+    </div>
+    <div class="uno-handArea">
+      <div class="uno-handBar">
+        <div class="uno-turnLabel">${v.status==='finished' ? 'بازی تمام شد' : (isMyTurn ? 'نوبت توئه!' : `نوبت ${esc((v.players[v.currentIndex]||{}).name||'')}`)}</div>
+        <div class="uno-handActions">
+          ${canDeclareUno ? `<button class="uno-unoBtn" onclick="onDeclareUno()">!UNO</button>` : ''}
+          ${isMyTurn && v.status==='playing' && !v.drawnPendingId ? `<button class="uno-secondaryBtn uno-secondaryBtn--sm" onclick="onDrawClick()">برداشتن کارت</button>` : ''}
+          ${isMyTurn && v.status==='playing' && v.drawnPendingId ? `<button class="uno-secondaryBtn uno-secondaryBtn--sm" onclick="onPassClick()">رد نوبت</button>` : ''}
+        </div>
+      </div>
+      <div class="uno-hand">${handHtml}</div>
+    </div>
+    ${wildModal}${rulesModal}${winModal}
+  `;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.className = 'uno-app';
+  let html = '';
+  if (uiScreen === 'landing') html = renderLanding();
+  else if (uiScreen === 'room') {
+    if (!currentView) html = renderLoading() + (errorMsg ? `<div class="uno-landing"><div class="uno-error" style="max-width:340px;margin:0 auto">${esc(errorMsg)}</div></div>` : '');
+    else if (currentView.status === 'waiting') html = renderLobby();
+    else html = renderGame();
+  }
+  app.innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
