@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>منتظریم...</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;900&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#0a0c1e;
+    --bg-2:#1a1244;
+    --bg-3:#2a1642;
+    --gold:#c9a227;
+    --gold-soft:#e8caa0;
+    --ivory:#f3ecd9;
+    --wine:#7a3b4a;
+    --wine-glow:rgba(122,59,74,.45);
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+
+  html,body{
+    height:100%;
+  }
+
+  body{
+    font-family:'Vazirmatn', sans-serif;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 12%, rgba(201,162,39,.10), transparent 60%),
+      radial-gradient(ellipse 90% 60% at 50% 100%, var(--bg-3), transparent 70%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
+    color:var(--ivory);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:space-between;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* ---- stars ---- */
+  #stars{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+  .star{
+    position:absolute;
+    width:2px;
+    height:2px;
+    border-radius:50%;
+    background:var(--ivory);
+    animation:twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.05; transform:scale(.6); box-shadow:none; }
+    50%{ opacity:1; transform:scale(1.6); box-shadow:0 0 6px 1px rgba(243,236,217,.8); }
+  }
+
+  /* ---- moon ---- */
+  .moon-wrap{
+    position:relative;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    padding-top:clamp(28px, 6vh, 56px);
+    z-index:1;
+  }
+  .moon{
+    width:clamp(44px, 8vw, 64px);
+    height:clamp(44px, 8vw, 64px);
+    border-radius:50%;
+    background:var(--gold-soft);
+    box-shadow:-16px 0 0 0 var(--bg-1);
+  }
+
+  main{
+    z-index:1;
+    width:100%;
+    max-width:760px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:clamp(20px, 4vw, 40px);
+    gap:clamp(28px, 5vh, 48px);
+  }
+
+  .occasion{
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .occasion .date-line{
+    font-weight:700;
+    font-size:clamp(1.35rem, 4vw, 2.15rem);
+    letter-spacing:.5px;
+    color:var(--ivory);
+  }
+  .occasion .date-line b{
+    color:var(--gold);
+    font-weight:700;
+  }
+  .occasion .hour-line{
+    font-weight:500;
+    font-size:clamp(.95rem, 2.2vw, 1.15rem);
+    color:var(--gold-soft);
+    opacity:.85;
+  }
+
+  .countdown{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:clamp(10px, 2.4vw, 22px);
+    width:100%;
+  }
+  .unit{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:10px;
+    min-width:clamp(58px, 14vw, 108px);
+  }
+  .unit .num{
+    font-weight:900;
+    font-size:clamp(2rem, 8vw, 4rem);
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    color:var(--ivory);
+    text-shadow:0 0 24px var(--wine-glow);
+    transition:transform .25s ease, opacity .25s ease;
+  }
+  .unit .num.tick{
+    animation:tick .4s ease;
+  }
+  @keyframes tick{
+    0%{ transform:translateY(-6px); opacity:.4; }
+    100%{ transform:translateY(0); opacity:1; }
+  }
+  .unit .lbl{
+    font-weight:500;
+    font-size:clamp(.75rem, 2vw, .95rem);
+    color:var(--gold-soft);
+    opacity:.8;
+  }
+  .sep{
+    font-weight:700;
+    font-size:clamp(1.4rem, 5vw, 2.6rem);
+    color:var(--wine);
+    opacity:.7;
+    transform:translateY(-6px);
+  }
+
+  .arrived{
+    display:none;
+    text-align:center;
+    font-weight:700;
+    font-size:clamp(1.6rem, 5vw, 2.6rem);
+    color:var(--gold);
+  }
+
+  footer{
+    z-index:1;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    padding:clamp(28px, 7vh, 64px) 20px clamp(36px, 8vh, 72px);
+  }
+  .waiting{
+    font-family:'Noto Nastaliq Urdu', serif;
+    font-weight:600;
+    font-size:clamp(2rem, 6vw, 3.4rem);
+    color:var(--gold-soft);
+    text-align:center;
+    animation:breathe 4.5s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%,100%{ opacity:.72; }
+    50%{ opacity:1; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .star, .waiting, .unit .num.tick{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div class="moon-wrap"><div class="moon"></div></div>
+
+<main>
+  <div class="occasion">
+    <div class="date-line">جمعه، <b>۲۰ شهریور</b></div>
+    <div class="hour-line">ساعت ۲۱:۰۰</div>
+  </div>
+
+  <div class="countdown" id="countdown">
+    <div class="unit">
+      <div class="num" id="days">--</div>
+      <div class="lbl">روز</div>
+    </div>
+    <div class="sep">:</div>
+    <div class="unit">
+      <div class="num" id="hours">--</div>
+      <div class="lbl">ساعت</div>
+    </div>
+    <div class="sep">:</div>
+    <div class="unit">
+      <div class="num" id="minutes">--</div>
+      <div class="lbl">دقیقه</div>
+    </div>
+    <div class="sep">:</div>
+    <div class="unit">
+      <div class="num" id="seconds">--</div>
+      <div class="lbl">ثانیه</div>
+    </div>
+  </div>
+
+  <div class="arrived" id="arrived">وقتش رسید</div>
+</main>
+
+<footer>
+  <div class="waiting">منتظریم ...</div>
+</footer>
+
+<script>
+  // Friday, 20 Shahrivar 1405 — 21:00 Iran Standard Time (UTC+03:30)
+  const target = new Date("2026-09-11T21:00:00+03:30");
+
+  const faDigits = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+  function toFa(n){
+    return String(n).split('').map(d => faDigits[d] ?? d).join('');
+  }
+  function pad2(n){
+    return n < 10 ? '0' + n : '' + n;
+  }
+
+  const els = {
+    days: document.getElementById('days'),
+    hours: document.getElementById('hours'),
+    minutes: document.getElementById('minutes'),
+    seconds: document.getElementById('seconds'),
+  };
+  const countdownBox = document.getElementById('countdown');
+  const arrivedBox = document.getElementById('arrived');
+  const prev = { days:null, hours:null, minutes:null, seconds:null };
+
+  function setUnit(key, value){
+    const text = toFa(pad2(value));
+    if (prev[key] !== value){
+      els[key].textContent = text;
+      els[key].classList.remove('tick');
+      void els[key].offsetWidth;
+      els[key].classList.add('tick');
+      prev[key] = value;
+    }
+  }
+
+  function update(){
+    const now = new Date();
+    let diff = target - now;
+
+    if (diff <= 0){
+      countdownBox.style.display = 'none';
+      arrivedBox.style.display = 'block';
+      clearInterval(timer);
+      return;
+    }
+
+    const day = Math.floor(diff / 86400000);
+    diff -= day * 86400000;
+    const hour = Math.floor(diff / 3600000);
+    diff -= hour * 3600000;
+    const minute = Math.floor(diff / 60000);
+    diff -= minute * 60000;
+    const second = Math.floor(diff / 1000);
+
+    setUnit('days', day);
+    setUnit('hours', hour);
+    setUnit('minutes', minute);
+    setUnit('seconds', second);
+  }
+
+  update();
+  const timer = setInterval(update, 1000);
+
+  // ambient stars
+  const starsEl = document.getElementById('stars');
+  const STAR_COUNT = 90;
+  for (let i = 0; i < STAR_COUNT; i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    const size = Math.random() * 1.6 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.animationDuration = (1.6 + Math.random() * 2.6) + 's';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    starsEl.appendChild(s);
+  }
+</script>
+
+</body>
+</html>
