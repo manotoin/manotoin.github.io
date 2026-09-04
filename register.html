@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ثبت‌نام مسابقه</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;900&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#0a0c1e;
+    --bg-2:#1a1244;
+    --bg-3:#2a1642;
+    --gold:#c9a227;
+    --gold-soft:#e8caa0;
+    --ivory:#f3ecd9;
+    --wine:#7a3b4a;
+    --wine-glow:rgba(122,59,74,.45);
+    --danger:#c95a4a;
+  }
+
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+
+  body{
+    font-family:'Vazirmatn', sans-serif;
+    background:
+      radial-gradient(ellipse 60% 40% at 50% 12%, rgba(201,162,39,.10), transparent 60%),
+      radial-gradient(ellipse 90% 60% at 50% 100%, var(--bg-3), transparent 70%),
+      linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 55%, var(--bg-1) 100%);
+    color:var(--ivory);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow-x:hidden;
+    position:relative;
+    padding:24px;
+  }
+
+  #stars{ position:fixed; inset:0; z-index:0; pointer-events:none; }
+  .star{
+    position:absolute; width:2px; height:2px; border-radius:50%;
+    background:var(--ivory);
+    animation:twinkle 3s ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.05; transform:scale(.6); box-shadow:none; }
+    50%{ opacity:1; transform:scale(1.6); box-shadow:0 0 6px 1px rgba(243,236,217,.8); }
+  }
+
+  .moon{
+    position:absolute;
+    top:clamp(24px, 5vh, 48px);
+    right:50%;
+    transform:translateX(50%);
+    width:clamp(40px, 7vw, 56px);
+    height:clamp(40px, 7vw, 56px);
+    border-radius:50%;
+    background:var(--gold-soft);
+    box-shadow:-15px 0 0 0 var(--bg-1);
+    z-index:1;
+  }
+
+  .card{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-width:440px;
+    margin-top:clamp(70px, 12vh, 110px);
+    background:rgba(26,18,68,.45);
+    border:1px solid rgba(232,202,160,.18);
+    border-radius:20px;
+    padding:clamp(28px, 5vw, 40px);
+    backdrop-filter:blur(14px);
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+
+  h1{
+    font-weight:700;
+    font-size:clamp(1.3rem, 4vw, 1.7rem);
+    text-align:center;
+    margin-bottom:8px;
+    color:var(--ivory);
+  }
+  .sub{
+    text-align:center;
+    font-size:.9rem;
+    color:var(--gold-soft);
+    opacity:.8;
+    margin-bottom:28px;
+  }
+
+  form{ display:flex; flex-direction:column; gap:20px; }
+
+  .field{ display:flex; flex-direction:column; gap:8px; }
+  .field label{
+    font-size:.85rem;
+    color:var(--gold-soft);
+    font-weight:500;
+  }
+  .field input{
+    background:rgba(10,12,30,.55);
+    border:1px solid rgba(232,202,160,.25);
+    border-radius:12px;
+    padding:13px 14px;
+    color:var(--ivory);
+    font-family:'Vazirmatn', sans-serif;
+    font-size:1rem;
+    outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease;
+  }
+  .field input::placeholder{ color:rgba(243,236,217,.35); }
+  .field input:focus{
+    border-color:var(--gold);
+    box-shadow:0 0 0 3px rgba(201,162,39,.15);
+  }
+
+  .error-msg{
+    font-size:.8rem;
+    color:var(--danger);
+    min-height:16px;
+  }
+
+  button{
+    margin-top:6px;
+    background:linear-gradient(135deg, var(--gold) 0%, var(--gold-soft) 100%);
+    color:#22160a;
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    font-family:'Vazirmatn', sans-serif;
+    font-weight:700;
+    font-size:1rem;
+    cursor:pointer;
+    transition:transform .15s ease, opacity .2s ease;
+  }
+  button:hover{ transform:translateY(-1px); }
+  button:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+
+  .status{
+    margin-top:16px;
+    text-align:center;
+    font-size:.85rem;
+    color:var(--danger);
+    min-height:18px;
+  }
+
+  .success{
+    text-align:center;
+    display:none;
+  }
+  .success .nastaliq{
+    font-family:'Noto Nastaliq Urdu', serif;
+    font-weight:600;
+    font-size:clamp(2rem, 6vw, 2.8rem);
+    color:var(--gold-soft);
+    margin-bottom:14px;
+    animation:breathe 4.5s ease-in-out infinite;
+  }
+  @keyframes breathe{
+    0%,100%{ opacity:.75; } 50%{ opacity:1; }
+  }
+  .success p{
+    font-size:.95rem;
+    color:var(--ivory);
+    opacity:.85;
+    line-height:1.9;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .star, .success .nastaliq{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+<div class="moon"></div>
+
+<div class="card">
+  <div id="formView">
+    <h1>ثبت‌نام در مسابقه</h1>
+    <div class="sub">اطلاعاتت رو وارد کن تا ثبت‌نامت نهایی بشه</div>
+
+    <form id="regForm" novalidate>
+      <div class="field">
+        <label for="name">اسم</label>
+        <input type="text" id="name" placeholder="مثلاً: علی محمدی" autocomplete="name">
+        <div class="error-msg" id="nameErr"></div>
+      </div>
+
+      <div class="field">
+        <label for="username">یوزرنیم تلگرام</label>
+        <input type="text" id="username" placeholder="مثلاً: @username" autocomplete="off">
+        <div class="error-msg" id="userErr"></div>
+      </div>
+
+      <button type="submit" id="submitBtn">ثبت‌نام</button>
+      <div class="status" id="status"></div>
+    </form>
+  </div>
+
+  <div class="success" id="successView">
+    <div class="nastaliq">ثبت شد ...</div>
+    <p>ثبت‌نامت با موفقیت انجام شد.<br>منتظر اطلاعیه‌های بعدی باش.</p>
+  </div>
+</div>
+
+<script>
+  // --- تنظیمات ربات تلگرام ---
+  const BOT_TOKEN = "8879799904:AAGefS75PLS8QD5igncU5ile-geCbVk1P3c";
+  const CHAT_ID   = "8401414014";
+
+  const form = document.getElementById('regForm');
+  const nameInput = document.getElementById('name');
+  const userInput = document.getElementById('username');
+  const nameErr = document.getElementById('nameErr');
+  const userErr = document.getElementById('userErr');
+  const statusEl = document.getElementById('status');
+  const submitBtn = document.getElementById('submitBtn');
+  const formView = document.getElementById('formView');
+  const successView = document.getElementById('successView');
+
+  function escapeHtml(str){
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function formatPersianDate(){
+    const now = new Date();
+    const dateFmt = new Intl.DateTimeFormat('fa-IR', {
+      calendar: 'persian', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    }).format(now);
+    const timeFmt = new Intl.DateTimeFormat('fa-IR', {
+      hour: '2-digit', minute: '2-digit'
+    }).format(now);
+    return `${dateFmt} — ساعت ${timeFmt}`;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    nameErr.textContent = '';
+    userErr.textContent = '';
+    statusEl.textContent = '';
+
+    const name = nameInput.value.trim();
+    let username = userInput.value.trim();
+
+    let hasError = false;
+    if (!name){
+      nameErr.textContent = 'لطفاً اسمت رو وارد کن';
+      hasError = true;
+    }
+    if (!username){
+      userErr.textContent = 'لطفاً یوزرنیم تلگرامت رو وارد کن';
+      hasError = true;
+    }
+    if (hasError) return;
+
+    if (!username.startsWith('@')) username = '@' + username;
+
+    const dateStr = formatPersianDate();
+    const text =
+      `📋 <b>ثبت‌نام جدید مسابقه</b>\n\n` +
+      `👤 <b>اسم:</b> ${escapeHtml(name)}\n` +
+      `💬 <b>یوزرنیم تلگرام:</b> ${escapeHtml(username)}\n` +
+      `🗓 <b>تاریخ ثبت‌نام:</b> ${dateStr}`;
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'در حال ارسال...';
+
+    try{
+      const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' })
+      });
+      const data = await res.json();
+
+      if (!data.ok) throw new Error(data.description || 'خطای ناشناخته');
+
+      formView.style.display = 'none';
+      successView.style.display = 'block';
+
+    } catch(err){
+      statusEl.textContent = 'ارسال با مشکل مواجه شد. دوباره تلاش کن.';
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'ثبت‌نام';
+    }
+  });
+
+  // ambient stars
+  const starsEl = document.getElementById('stars');
+  for (let i = 0; i < 70; i++){
+    const s = document.createElement('div');
+    s.className = 'star';
+    s.style.left = Math.random() * 100 + '%';
+    s.style.top = Math.random() * 100 + '%';
+    const size = Math.random() * 1.6 + 1;
+    s.style.width = size + 'px';
+    s.style.height = size + 'px';
+    s.style.animationDuration = (1.6 + Math.random() * 2.6) + 's';
+    s.style.animationDelay = (Math.random() * 4) + 's';
+    starsEl.appendChild(s);
+  }
+</script>
+
+</body>
+</html>
