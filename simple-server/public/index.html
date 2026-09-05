@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حکم آنلاین | Hokm Online</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Tahoma, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #fff; min-height: 100vh; padding: 16px;
+    }
+    h1 { text-align: center; margin-bottom: 12px; font-size: 1.6rem; }
+    .panel {
+      background: rgba(255,255,255,0.08); border-radius: 12px;
+      padding: 16px; margin-bottom: 12px; backdrop-filter: blur(6px);
+    }
+    input, select, button {
+      padding: 10px 14px; border-radius: 8px; border: none;
+      font-size: 1rem; margin: 4px;
+    }
+    input, select { background: #fff; color: #222; width: 180px; }
+    button {
+      background: #27ae60; color: #fff; cursor: pointer; font-weight: bold;
+    }
+    button:hover { background: #219150; }
+    button:disabled { background: #555; cursor: not-allowed; }
+    button.danger { background: #c0392b; }
+    button.blue { background: #2980b9; }
+    #status { text-align: center; margin: 8px 0; font-size: 0.95rem; opacity: 0.9; }
+    .scoreboard {
+      display: flex; justify-content: space-around; text-align: center; gap: 8px;
+    }
+    .scoreboard div { background: rgba(0,0,0,0.25); padding: 8px 16px; border-radius: 8px; }
+    #table {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      grid-template-rows: auto auto auto; gap: 8px; margin: 16px 0;
+      min-height: 280px; place-items: center;
+    }
+    .seat {
+      background: rgba(0,0,0,0.3); border-radius: 10px; padding: 10px;
+      min-width: 120px; text-align: center; font-size: 0.9rem;
+    }
+    .seat.me { border: 2px solid #f1c40f; }
+    .seat.turn { box-shadow: 0 0 12px #f1c40f; }
+    .cards {
+      display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 12px;
+    }
+    .card {
+      width: 54px; height: 76px; background: #fff; color: #111;
+      border-radius: 6px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; font-weight: bold;
+      cursor: pointer; user-select: none; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      font-size: 0.95rem;
+    }
+    .card.red { color: #c0392b; }
+    .card:hover { transform: translateY(-6px); }
+    .card.disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .trick-area {
+      grid-column: 2; grid-row: 2;
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      min-height: 90px; align-items: center;
+    }
+    .msg { background: #16a085; padding: 8px 12px; border-radius: 8px; margin: 6px 0; text-align: center; }
+    .hidden { display: none !important; }
+    #trump-choice button { margin: 4px; font-size: 1.3rem; }
+  </style>
+</head>
+<body>
+  <h1>🃏 حکم آنلاین</h1>
+  <div id="status">در حال اتصال به سرور...</div>
+
+  <!-- Lobby -->
+  <div id="lobby" class="panel">
+    <div style="text-align:center">
+      <input id="nameInput" placeholder="نام شما" value="بازیکن" />
+      <br/>
+      <button onclick="createRoom()">ساخت روم جدید</button>
+      <br/><br/>
+      <input id="codeInput" placeholder="کد روم" maxlength="6" style="text-transform:uppercase" />
+      <select id="roleSelect">
+        <option value="player">بازیکن</option>
+        <option value="supervisor">ناظر</option>
+        <option value="spectator">بیننده</option>
+      </select>
+      <button class="blue" onclick="joinRoom()">ورود به روم</button>
+    </div>
+  </div>
+
+  <!-- Game -->
+  <div id="game" class="hidden">
+    <div class="panel scoreboard">
+      <div>دست <span id="legNum">1</span></div>
+      <div>ست تیم ۰: <b id="set0">0</b> | تیم ۱: <b id="set1">0</b></div>
+      <div>دست‌ها: <b id="trick0">0</b> - <b id="trick1">0</b></div>
+      <div>حکم: <b id="trumpShow">-</b></div>
+    </div>
+
+    <div id="info" class="msg hidden"></div>
+
+    <div id="table">
+      <div></div>
+      <div class="seat" id="seat2">حریف</div>
+      <div></div>
+      <div class="seat" id="seat3">یار چپ</div>
+      <div class="trick-area" id="trickArea"></div>
+      <div class="seat" id="seat1">یار راست</div>
+      <div></div>
+      <div class="seat me" id="seat0">شما</div>
+      <div></div>
+    </div>
+
+    <div id="trump-choice" class="panel hidden" style="text-align:center">
+      <p>شما حاکم هستید. خال حکم را انتخاب کنید:</p>
+      <button onclick="chooseTrump('spades')">♠ پیک</button>
+      <button onclick="chooseTrump('hearts')">♥ دل</button>
+      <button onclick="chooseTrump('clubs')">♣ گشنیز</button>
+      <button onclick="chooseTrump('diamonds')">♦ خشت</button>
+    </div>
+
+    <div id="myCards" class="cards"></div>
+
+    <div class="panel" style="text-align:center;margin-top:12px">
+      <button id="startBtn" class="hidden" onclick="startMatch()">شروع بازی</button>
+      <div>کد روم: <b id="roomCode">-</b></div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    let myId = null;
+    let room = null;
+    let myHand = [];
+
+    const suitSym = { spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦' };
+    const isRed = s => s === 'hearts' || s === 'diamonds';
+
+    socket.on('connect', () => {
+      document.getElementById('status').textContent = 'متصل شد ✓';
+    });
+
+    socket.on('room_updated', (r) => {
+      room = r;
+      render();
+    });
+
+    socket.on('ready_to_start', (d) => showInfo(d.msg));
+    socket.on('trick_finished', (d) => showInfo('دست تموم شد'));
+    socket.on('set_finished', (d) => {
+      showInfo(d.isKot ? 'کوت! ' : '' + 'ست تموم شد');
+    });
+    socket.on('game_paused', () => showInfo('بازی توسط ناظر متوقف شد'));
+
+    function createRoom() {
+      const name = document.getElementById('nameInput').value || 'بازیکن';
+      socket.emit('create_room', { name }, (res) => {
+        if (!res.ok) return alert(res.error);
+        myId = res.playerId;
+        room = res.room;
+        showGame();
+        render();
+      });
+    }
+
+    function joinRoom() {
+      const code = document.getElementById('codeInput').value.trim().toUpperCase();
+      const name = document.getElementById('nameInput').value || 'بازیکن';
+      const asRole = document.getElementById('roleSelect').value;
+      if (!code) return alert('کد روم را وارد کنید');
+      socket.emit('join_room', { code, name, asRole }, (res) => {
+        if (!res.ok) return alert(res.error);
+        myId = res.playerId;
+        room = res.room;
+        showGame();
+        render();
+      });
+    }
+
+    function startMatch() {
+      socket.emit('start_match', (res) => {
+        if (!res.ok) alert(res.error);
+      });
+    }
+
+    function chooseTrump(trump) {
+      socket.emit('choose_trump', { trump }, (res) => {
+        if (!res.ok) alert(res.error);
+      });
+    }
+
+    function playCard(cardId) {
+      socket.emit('play_card', { cardId }, (res) => {
+        if (!res.ok) alert(res.error);
+      });
+    }
+
+    function showGame() {
+      document.getElementById('lobby').classList.add('hidden');
+      document.getElementById('game').classList.remove('hidden');
+    }
+
+    function showInfo(msg) {
+      const el = document.getElementById('info');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 3000);
+    }
+
+    function render() {
+      if (!room) return;
+      document.getElementById('roomCode').textContent = room.code;
+      document.getElementById('legNum').textContent = room.currentLeg?.legNumber || '-';
+      document.getElementById('set0').textContent = room.currentLeg?.teamSets?.[0] ?? 0;
+      document.getElementById('set1').textContent = room.currentLeg?.teamSets?.[1] ?? 0;
+      document.getElementById('trick0').textContent = room.currentLeg?.currentSet?.teamTricks?.[0] ?? 0;
+      document.getElementById('trick1').textContent = room.currentLeg?.currentSet?.teamTricks?.[1] ?? 0;
+      const trump = room.currentLeg?.currentSet?.trump;
+      document.getElementById('trumpShow').textContent = trump ? suitSym[trump] : '-';
+
+      // Start button
+      const startBtn = document.getElementById('startBtn');
+      if (room.status === 'waiting' && room.players.length === 4) {
+        startBtn.classList.remove('hidden');
+      } else {
+        startBtn.classList.add('hidden');
+      }
+
+      // Trump choice
+      const trumpBox = document.getElementById('trump-choice');
+      if (room.phase === 'choosing_trump' && room.turnPlayerId === myId) {
+        trumpBox.classList.remove('hidden');
+      } else {
+        trumpBox.classList.add('hidden');
+      }
+
+      // Seats
+      const me = room.players.find(p => p.id === myId);
+      const myPos = me ? me.position : 0;
+      room.players.forEach(p => {
+        const rel = (p.position - myPos + 4) % 4;
+        const seat = document.getElementById('seat' + rel);
+        if (seat) {
+          seat.textContent = `${p.name} (تیم ${p.team})` + (p.id === room.turnPlayerId ? ' ⭐' : '');
+          seat.classList.toggle('turn', p.id === room.turnPlayerId);
+        }
+      });
+
+      // Trick cards
+      const trickArea = document.getElementById('trickArea');
+      trickArea.innerHTML = '';
+      if (room.currentTrick?.cards) {
+        room.currentTrick.cards.forEach(({ card }) => {
+          trickArea.appendChild(makeCardEl(card, true));
+        });
+      }
+
+      // My hand
+      const myCardsDiv = document.getElementById('myCards');
+      myCardsDiv.innerHTML = '';
+      const myPlayer = room.players.find(p => p.id === myId);
+      myHand = myPlayer?.hand || [];
+      const isMyTurn = room.turnPlayerId === myId && room.phase === 'playing_trick';
+      myHand.forEach(card => {
+        const el = makeCardEl(card, false);
+        if (isMyTurn) {
+          el.onclick = () => playCard(card.id);
+        } else {
+          el.classList.add('disabled');
+        }
+        myCardsDiv.appendChild(el);
+      });
+
+      // Status
+      let st = `فاز: ${room.phase} | وضعیت: ${room.status}`;
+      if (room.status === 'waiting') {
+        const left = Math.max(0, Math.floor((room.joinDeadline - Date.now()) / 1000));
+        st += ` | زمان باقی‌مانده جوین: ${left}s`;
+      }
+      document.getElementById('status').textContent = st;
+    }
+
+    function makeCardEl(card, small) {
+      const el = document.createElement('div');
+      el.className = 'card' + (isRed(card.suit) ? ' red' : '');
+      el.innerHTML = `<div>${card.rank}</div><div>${suitSym[card.suit]}</div>`;
+      return el;
+    }
+
+    setInterval(() => { if (room && room.status === 'waiting') render(); }, 1000);
+  </script>
+</body>
+</html>
